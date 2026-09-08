@@ -1,0 +1,126 @@
+import { jsPDF } from 'jspdf';
+import { STATES } from '../data/rera';
+import { inr, fmtDate } from './format';
+
+export function generateFormM(payload) {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 56;
+  let y = 56;
+
+  const {
+    stateLabel,
+    name,
+    addr,
+    builder,
+    project,
+    unit,
+    facts,
+    result,
+  } = payload;
+
+  const state = STATES.find((s) => s.label === stateLabel) || STATES[0];
+  const complainant = name || '[Complainant Name]';
+  const address = addr || '[Complainant Address]';
+  const promoter = builder || '[Promoter / Builder Name]';
+  const proj = project || '[Project Name & RERA Reg. No.]';
+  const flat = unit || '[Unit / Flat No.]';
+  const r = result;
+
+  const line = (t, opt = {}) => {
+    doc.setFont('times', opt.style || 'normal');
+    doc.setFontSize(opt.size || 11);
+    const split = doc.splitTextToSize(t, W - 2 * M);
+    if (opt.align === 'center') {
+      doc.text(t, W / 2, y, { align: 'center' });
+      y += opt.lh || 15;
+    } else {
+      doc.text(split, M, y);
+      y += split.length * (opt.lh || 15);
+    }
+    if (opt.gap) y += opt.gap;
+  };
+
+  line('FORM \'M\'', { size: 14, style: 'bold', align: 'center' });
+  line('[See rule 36 / relevant State RERA Rule]', { size: 9, align: 'center', gap: 6 });
+  line('COMPLAINT TO THE REAL ESTATE REGULATORY AUTHORITY / ADJUDICATING OFFICER', { size: 10, style: 'bold', align: 'center', gap: 4 });
+  line('Before the ' + state.label + ' — ' + state.authority, { size: 10, align: 'center', gap: 14 });
+
+  line('Complaint No.: ____________________ of ' + new Date().getFullYear(), { size: 10, gap: 10 });
+
+  line('IN THE MATTER OF:', { style: 'bold', gap: 6 });
+  line(complainant + ',', {});
+  line(address, { gap: 4 });
+  line('… Complainant', { style: 'italic', gap: 8 });
+  line('VERSUS', { style: 'bold', align: 'center', gap: 8 });
+  line(promoter + ',', {});
+  line('Promoter of the project "' + proj + '"', { gap: 4 });
+  line('… Respondent', { style: 'italic', gap: 14 });
+
+  line('1. PARTICULARS OF THE COMPLAINT', { style: 'bold', gap: 6 });
+  line('Project / Unit: ' + proj + ', Unit No. ' + flat + '.', { gap: 4 });
+  line('Promised date of possession: ' + fmtDate(r.promised) + ' (after grace period, if any).', { gap: 4 });
+  line('Actual position as on: ' + fmtDate(r.target) + '. Possession has been delayed by ' + r.delay.long + '.', { gap: 10 });
+
+  line('2. RELIEF SOUGHT UNDER SECTION 18, RERA ACT 2016', { style: 'bold', gap: 6 });
+  const defaultFacts =
+    'The Respondent has failed to hand over possession of the said unit by the promised date. ' +
+    'The Complainant is entitled to interest for every month of delay under Section 18 of the Real Estate ' +
+    '(Regulation and Development) Act, 2016, at the prescribed rate of SBI highest MCLR plus 2%.';
+  line(facts || defaultFacts, { gap: 10 });
+
+  line('3. COMPUTATION OF DELAY INTEREST', { style: 'bold', gap: 8 });
+  const rows = [
+    ['Total amount paid to Promoter', inr(r.principal)],
+    ['Applicable rate applied', r.weightedRate ? r.weightedRate.toFixed(2) + '% p.a.' : '—'],
+    ['Interest method', r.mode === 'simple' ? 'Simple interest (statutory)' : 'Monthly compounding'],
+    ['Delay interest claimed', inr(r.interest)],
+    ['Total amount claimed (with principal)', inr(r.grand)],
+  ];
+  doc.setFontSize(10);
+  rows.forEach((rw) => {
+    doc.setFont('times', 'normal');
+    doc.text(rw[0], M + 4, y);
+    doc.setFont('times', 'bold');
+    doc.text(rw[1], W - M - 4, y, { align: 'right' });
+    doc.setDrawColor(210);
+    doc.line(M, y + 6, W - M, y + 6);
+    y += 22;
+  });
+  y += 8;
+
+  line(
+    'The Complainant therefore prays that this Hon\'ble ' +
+      (r.intent === 'refund'
+        ? 'Authority may direct the Respondent to refund the entire amount paid of ' +
+          inr(r.principal) + ' together with interest of ' + inr(r.interest) +
+          ' from the dates of payment and such compensation and costs as the Authority deems fit.'
+        : 'Authority may direct the Respondent to pay delay interest of ' + inr(r.interest) +
+          ' together with such further interest, compensation and costs as the Authority deems fit.'),
+    { gap: 20 }
+  );
+
+  line('VERIFICATION', { style: 'bold', gap: 6 });
+  line(
+    'I, ' + complainant + ', the Complainant above named, do hereby verify that the contents of this complaint are ' +
+      'true and correct to the best of my knowledge and belief.',
+    { gap: 24 }
+  );
+
+  line('Place: __________________', { gap: 4 });
+  line('Date:  __________________', { gap: 24 });
+  doc.text('(Signature of Complainant)', W - M, y, { align: 'right' });
+  doc.text(complainant, W - M, y + 16, { align: 'right' });
+
+  doc.setFontSize(7.5);
+  doc.setTextColor(120);
+  doc.text(
+    'Auto-generated by PossessionPro. Draft only — not legal advice. Verify figures & format with your State RERA Rules before filing.',
+    W / 2,
+    H - 24,
+    { align: 'center', maxWidth: W - 2 * M }
+  );
+
+  doc.save('Form-M-RERA-Complaint.pdf');
+}

@@ -31,6 +31,52 @@ npm run build
 npm run preview
 ```
 
+## Testing
+
+The project ships with three layers of automated testing.
+
+### 1. Unit tests (Vitest)
+
+Covers the calculation engine (`calculate`, `effectiveStart`) and formatting helpers.
+
+```bash
+npm run test
+```
+
+Watch mode:
+
+```bash
+npm run test:watch
+```
+
+### 2. Component / UI tests (Vitest + React Testing Library)
+
+Renders the full `App` in a jsdom environment and verifies the calculator math, strategy/mode toggling, multi-tranche handling, MCLR-ledger loading and theme switching.
+
+```bash
+npm run test
+```
+
+### 3. End-to-end tests (Playwright)
+
+Runs against a live dev server in headless Chromium and Firefox, verifying page load, live computation, toggles, PDF download, and theme persistence.
+
+```bash
+# install browsers (once)
+npx playwright install
+
+# run e2e
+npm run test:e2e
+```
+
+Run the full suite (unit + component + e2e):
+
+```bash
+npm run test:all
+```
+
+Test reports (unit/component + Playwright HTML) are written to `coverage/`, `test-results/` and `playwright-report/` (gitignored).
+
 ## Project Structure
 
 ```
@@ -38,8 +84,11 @@ src/
   components/   UI components (Nav, Hero, Calculator, MCLR table, Form M, Footer)
   data/         SBI MCLR ledger, State RERA authority list
   utils/        Calculation engine, formatters, jsPDF Form 'M' generator
+  test/         Vitest setup (matchMedia, scrollIntoView shims)
   App.jsx       State owner & page composition
   index.css     Global light/dark theme styles
+tests/
+  e2e/          Playwright end-to-end specs
 ```
 
 ## Disclaimer
