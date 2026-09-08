@@ -1,0 +1,21 @@
+{
+  "name": "possession-pro",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "PossessionPro — RERA Section 18 delayed-possession interest calculator with SBI MCLR benchmarking and state-specific Form 'M' complaint generation.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}

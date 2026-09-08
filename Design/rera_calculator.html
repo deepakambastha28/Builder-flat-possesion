@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-RERA Automated Delay Penalty & Refund Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <!-- Header Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold text-xl tracking-tight">R</div>
+                <div>
+                    <span class="font-bold text-lg text-slate-900 block leading-tight">RERA Shield</span>
+                    <span class="text-xs text-slate-500 font-medium tracking-wide uppercase">Karnataka Portal</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                    SBI 3-Yr MCLR Updated: 8.80%
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Panel: User Input Configuration Form -->
+            <section class="lg:col-span-7 bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200/80">
+                <h1 class="text-2xl font-bold text-slate-900 mb-2">Delayed Possession Calculator</h1>
+                <p class="text-sm text-slate-500 mb-8">Calculate legally sound simple interest compensation according to Rule 15 of the Karnataka Real Estate Rules, 2017.</p>
+                
+                <form id="reraForm" onsubmit="event.preventDefault();" class="space-y-6">
+                    
+                    <!-- Strategic Intent Switcher -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-3">Your Legal Strategy / Intent</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="relative flex flex-col p-4 border rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition border-indigo-600 ring-2 ring-indigo-600/20" id="labelStay">
+                                <input type="radio" name="intent" value="stay" checked class="sr-only" onchange="toggleIntentLayout()">
+                                <span class="block text-sm font-bold text-slate-900">Claim Delay Compensation</span>
+                                <span class="block text-xs text-slate-500 mt-1">I want to stay in the project but penalize the builder.</span>
+                            </label>
+                            <label class="relative flex flex-col p-4 border rounded-xl cursor-pointer bg-white border-slate-200 hover:bg-slate-50 transition" id="labelWithdraw">
+                                <input type="radio" name="intent" value="withdraw" class="sr-only" onchange="toggleIntentLayout()">
+                                <span class="block text-sm font-bold text-slate-900">Demand Full Exit & Refund</span>
+                                <span class="block text-xs text-slate-500 mt-1">I want my money back with interest from payment dates.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Date Configurations -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="promisedDate" class="block text-sm font-medium text-slate-700 mb-1">Promised Possession Date</label>
+                            <input type="date" id="promisedDate" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-white text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
+                            <p class="text-xs text-slate-400 mt-1">As stated in your Sale Agreement</p>
+                        </div>
+                        <div id="endCalculationContainer">
+                            <label id="endDateLabel" for="endDate" class="block text-sm font-medium text-slate-700 mb-1">Target Assessment Date</label>
+                            <input type="date" id="endDate" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-white text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
+                            <p class="text-xs text-slate-400 mt-1">Use current date or handover date</p>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Financial Milestone Tranches -->
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-sm font-semibold text-slate-700">Financial Payment History</label>
+                            <button type="button" onclick="addPaymentRow()" class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition">
+                                ➕ Add Payment Milestone
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4 bg-amber-50 border border-amber-200 text-amber-800 p-2.5 rounded-lg">⚠️ <strong>Crucial Checklist:</strong> Input principal amounts only. Exclude structural taxes like GST, registration costs, and stamp duty values.</p>
+
+                        <div id="paymentRows" class="space-y-3">
+                            <!-- Injected Initial Row Elements -->
+                            <div class="payment-row grid grid-cols-12 gap-3 items-center">
+                                <div class="col-span-4">
+                                    <input type="date" required class="pay-date w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div class="col-span-6 relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-medium">₹</span>
+                                    <input type="number" placeholder="Principal Paid" required min="1" class="pay-amount w-full rounded-xl border border-slate-300 pl-7 pr-3 py-2 bg-white text-slate-900 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div class="col-span-2 text-right">
+                                    <button type="button" onclick="removePaymentRow(this)" class="text-slate-400 hover:text-rose-500 transition text-sm font-medium p-2">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submission Call to Action -->
+                    <button type="button" onclick="calculateReraPenalty()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-indigo-600/10 transition-colors duration-200">
+                        Calculate Legal Compensation
+                    </button>
+                </form>
+            </section>
+
+            <!-- Right Panel: Micro-SaaS Outputs & Paywall Opportunities -->
+            <section class="lg:col-span-5 space-y-6">
+                
+                <!-- Results Module -->
+                <div class="bg-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-800">
+                    <h2 class="text-lg font-bold text-slate-300 tracking-wide uppercase mb-6">Financial Recovery Overview</h2>
+                    
+                    <div class="space-y-5">
+                        <div class="border-b border-slate-800 pb-4 flex justify-between items-baseline">
+                            <span class="text-slate-400 text-sm">Total Verified Principal Paid:</span>
+                            <span class="text-xl font-semibold tracking-tight text-white" id="outPrincipal">₹0.00</span>
+                        </div>
+                        <div class="border-b border-slate-800 pb-4 flex justify-between items-baseline">
+                            <span class="text-slate-400 text-sm flex items-center gap-1">
+                                K-RERA Accrued Penalty Due:
+                            </span>
+                            <span class="text-2xl font-bold tracking-tight text-emerald-400" id="outInterest">₹0.00</span>
+                        </div>
+                        <div class="pt-2 flex justify-between items-baseline">
+                            <span class="text-indigo-300 font-medium text-sm">Total Recoverable Value:</span>
+                            <span class="text-3xl font-extrabold tracking-tight text-white" id="outTotal">₹0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Explanatory Meta Information -->
+                    <div class="mt-8 bg-slate-800/50 rounded-xl p-4 border border-slate-800/80 text-xs text-slate-400 space-y-2">
+                        <p>⚖️ <strong>Mathematical Basis:</strong> Evaluated using simple interest computed daily at an active compounding floor rate of <strong>10.80% Per Annum</strong> (SBI 3-Year MCLR 8.80% + 2.00% statutory premium markup).</p>
+                    </div>
+                </div>
+
+                <!-- Monetization / Lead Generation Hooks -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <h3 class="font-bold text-slate-900 text-md">📦 Premium Actions Available</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">Instantly convert this evaluation sheet into legal-ready assets for filing before the adjudicating officer.</p>
+                    
+                    <div class="space-y-2.5">
+                        <button class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold py-2.5 px-4 rounded-xl transition flex items-center justify-between">
+                            <span>📄 Download Certified Math Report (PDF)</span>
+                            <span class="bg-indigo-50 text-indigo-700 text-[10px] px-2 py-0.5 rounded font-bold">₹499</span>
+                        </button>
+                        <button class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold py-2.5 px-4 rounded-xl transition flex items-center justify-between">
+                            <span>⚖️ Generate Auto-Formatted Form N Filing Draft</span>
+                            <span class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">₹1,499</span>
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- Client-Side Business Engine Logic -->
+    <script>
+        // Set standard baseline parameters upon load
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
+        });
+
+        function toggleIntentLayout() {
+            const staySelected = document.querySelector('input[name="intent"]:checked').value === 'stay';
+            const lblStay = document.getElementById('labelStay');
+            const lblWithdraw = document.getElementById('labelWithdraw');
+            const endContainer = document.getElementById('endCalculationContainer');
+            
+            if (staySelected) {
+                lblStay.className = "relative flex flex-col p-4 border rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition border-indigo-600 ring-2 ring-indigo-600/20";
+                lblWithdraw.className = "relative flex flex-col p-4 border rounded-xl cursor-pointer bg-white border-slate-200 hover:bg-slate-50 transition";
+                endContainer.style.opacity = "1";
+            } else {
+                lblWithdraw.className = "relative flex flex-col p-4 border rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition border-indigo-600 ring-2 ring-indigo-600/20";
+                lblStay.className = "relative flex flex-col p-4 border rounded-xl cursor-pointer bg-white border-slate-200 hover:bg-slate-50 transition";
+                endContainer.style.opacity = "1"; 
+            }
+        }
+
+        function addPaymentRow() {
+            const targetContainer = document.getElementById('paymentRows');
+            const elementRow = document.createElement('div');
+            elementRow.className = "payment-row grid grid-cols-12 gap-3 items-center";
+            elementRow.innerHTML = `
+                <div class="col-span-4">
+                    <input type="date" required class="pay-date w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <div class="col-span-6 relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-medium">₹</span>
+                    <input type="number" placeholder="Principal Paid" required min="1" class="pay-amount w-full rounded-xl border border-slate-300 pl-7 pr-3 py-2 bg-white text-slate-900 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <div class="col-span-2 text-right">
+                    <button type="button" onclick="removePaymentRow(this)" class="text-slate-400 hover:text-rose-500 transition text-sm font-medium p-2">Delete</button>
+                </div>
+            `;
+            targetContainer.appendChild(elementRow);
+        }
+
+        function removePaymentRow(buttonInstance) {
+            const rows = document.querySelectorAll('.payment-row');
+            if(rows.length > 1) {
+                buttonInstance.closest('.payment-row').remove();
+            } else {
+                alert("At least one payment milestone block must be analyzed.");
+            }
+        }
+
+        function calculateReraPenalty() {
+            const strategicIntent = document.querySelector('input[name="intent"]:checked').value;
+            const textPromisedDate = document.getElementById('promisedDate').value;
+            const textEndDate = document.getElementById('endDate').value;
+            
+            if(!textPromisedDate || !textEndDate) {
+                alert("Please provide the legal Milestone dates.");
+                return;
+            }
+
+            const promisedDate = new Date(textPromisedDate);
+            const targetDate = new Date(textEndDate);
+            const annualRate = 0.1080; 
+            
+            let totalPrincipal = 0;
+            let totalInterest = 0;
+
+            const DOMRows = document.querySelectorAll('.payment-row');
+            
+            for(let row of DOMRows) {
+                const dateVal = row.querySelector('.pay-date').value;
+                const amountVal = parseFloat(row.querySelector('.pay-amount').value);
+                
+                if(!dateVal || isNaN(amountVal)) continue;
+                
+                const installmentDate = new Date(dateVal);
+                totalPrincipal += amountVal;
+                
+                let evaluationStartDate;
+                
+                if (strategicIntent === 'stay') {
+                    const sequenceFloorDate = new Date(promisedDate.getTime() + (24 * 60 * 60 * 1000));
+                    evaluationStartDate = installmentDate > sequenceFloorDate ? installmentDate : sequenceFloorDate;
+                } else {
+                    evaluationStartDate = installmentDate;
+                }
+
+                const calculatedTimeDelta = targetDate.getTime() - evaluationStartDate.getTime();
+                const totalDaysElapsed = Math.ceil(calculatedTimeDelta / (1000 * 60 * 60 * 24));
+                
+                if(totalDaysElapsed > 0) {
+                    const trancheInterest = (amountVal * annualRate * totalDaysElapsed) / 365;
+                    totalInterest += trancheInterest;
+                }
+            }
+
+            document.getElementById('outPrincipal').innerText = "₹" + totalPrincipal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('outInterest').innerText = "₹" + totalInterest.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('outTotal').innerText = "₹" + (totalPrincipal + totalInterest).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    </script>
+</body>
+</html>
